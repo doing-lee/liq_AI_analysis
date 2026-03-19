@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>爆仓原因解读 - 逐仓 - Toobit</title>
+  <title>爆仓说明 · 爆仓原因解读 - 逐仓 - Toobit</title>
   <link rel="stylesheet" href="liq-pages.css" />
 </head>
 <body class="liq-page liq-page--light">
@@ -16,7 +16,7 @@
     </header>
 
     <div class="liq-hero">
-      <h1 id="orderSymbol">BTCUSDT 永续</h1>
+      <h1 id="orderSymbol">爆仓解读 - BTCUSDT 永续</h1>
       <div class="liq-mode-row">
         <span class="liq-chip liq-chip--iso">逐仓</span>
         <span class="liq-chip" id="chipLev">20x</span>
@@ -214,7 +214,7 @@
       if (mm == null && notional > 0) mm = notional * 0.01;
       var equityApprox = im + upl - feeAcc;
 
-      document.getElementById('orderSymbol').textContent = symbol;
+      document.getElementById('orderSymbol').textContent = '爆仓解读 - ' + symbol;
       document.getElementById('chipLev').textContent = Math.round(lev) + 'x';
       var chipSide = document.getElementById('chipSide');
       chipSide.textContent = sideKey === 'long' ? '多' : '空';
