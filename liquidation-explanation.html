@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>爆仓原因解读 - 合约订单 - Toobit</title>
+  <style>
+    :root {
+      --bg: #0a0b0f;
+      --panel: rgba(22, 24, 34, 0.94);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f4f4f5;
+      --text-muted: #94a3b8;
+      --green: #34d399;
+      --red: #f87171;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    body:not(.ph-entry-page) {
+      background: var(--bg);
+      background-image: radial-gradient(ellipse 100% 70% at 50% -15%, rgba(56, 189, 248, 0.11), transparent 52%), linear-gradient(180deg, #12141c 0%, var(--bg) 42%);
+      color: var(--text);
+    }
+    .layout { max-width: 720px; margin: 0 auto; padding: 28px 20px 48px; }
+    @media (min-width: 640px) { .layout { padding: 36px 24px 56px; } }
+    .page-title { font-size: clamp(22px, 5vw, 28px); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 8px; }
+    .page-lead { font-size: 14px; color: var(--text-muted); margin: 0 0 28px; line-height: 1.55; max-width: 42ch; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; margin-bottom: 16px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .card-title { font-weight: 600; }
+    .badge { font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+    .badge-liquidated { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+    .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+    .row:last-child { margin-bottom: 0; }
+    .label { color: var(--text-muted); }
+    .value { font-variant-numeric: tabular-nums; }
+    .value.long { color: var(--green); }
+    .value.short { color: var(--red); }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; text-decoration: none; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--text-muted); }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    .overlay.show { display: flex; }
+    .drawer { width: 100%; max-width: 720px; max-height: 92vh; background: linear-gradient(180deg, #1c1c22 0%, #16161a 48%); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(59,130,246,0.06); overflow: hidden; display: flex; flex-direction: column; }
+    .drawer-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 22px 28px 18px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.15); }
+    .drawer-title-wrap { flex: 1; min-width: 0; }
+    .drawer-title { font-size: 18px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .drawer-sub { font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.5; }
+    .drawer-sub .pill { display: inline-block; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,0.06); font-variant-numeric: tabular-nums; margin-right: 6px; margin-bottom: 2px; }
+    .drawer-close { flex-shrink: 0; width: 36px; height: 36px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer; border-radius: 10px; font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    .drawer-close:hover { background: var(--border); color: var(--text); }
+    .drawer-body { padding: 20px 28px 28px; overflow-y: auto; flex: 1; }
+    .drawer-body::-webkit-scrollbar { width: 6px; }
+    .drawer-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .loading { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .loading-spinner { width: 36px; height: 36px; margin: 0 auto 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .modal-section { margin-bottom: 28px; }
+    .modal-section:last-of-type { margin-bottom: 0; }
+    .modal-h { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 12px; }
+    .event-timeline {
+      position: relative;
+      --ev-pad: 4px;
+      --ev-rail: 32px;
+      padding-left: var(--ev-pad);
+    }
+    .event-timeline::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      left: calc(var(--ev-pad) + var(--ev-rail) / 2 - 1px);
+      top: 18px;
+      bottom: 18px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(245,158,11,0.4), rgba(239,68,68,0.35));
+      border-radius: 1px;
+    }
+    .event-item { position: relative; display: grid; grid-template-columns: var(--ev-rail) 1fr; gap: 14px; margin-bottom: 0; padding-bottom: 20px; }
+    .event-item:last-child { padding-bottom: 0; }
+    .event-dot {
+      box-sizing: border-box;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-top: 6px;
+      margin-left: 0;
+      justify-self: center;
+      border: 3px solid #1c1c22;
+      z-index: 2;
+      box-shadow: 0 0 0 2px currentColor;
+      position: relative;
+    }
+    .event-item--warn .event-dot { background: #f59e0b; color: #f59e0b; }
+    .event-item--liq .event-dot { background: var(--red); color: var(--red); }
+    .event-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+    .event-item--warn .event-card { border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.04); }
+    .event-item--liq .event-card { border-color: rgba(239, 68, 68, 0.18); background: rgba(239, 68, 68, 0.04); }
+    .event-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 10px; }
+    .event-card-head .event-card-datetime { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+    .event-card-head .event-tag { margin-bottom: 0; flex-shrink: 0; }
+    .event-caption-text { font-size: 14px; line-height: 1.6; color: var(--text); margin: 0; }
+    .event-caption-text + .metric-row { margin-top: 14px; }
+    .event-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 8px; letter-spacing: 0.02em; }
+    .event-item--warn .event-tag { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .event-item--liq .event-tag { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .event-time { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .event-tz { font-size: 10px; font-weight: 500; color: var(--text-muted); opacity: 0.7; margin-left: 6px; text-transform: lowercase; }
+    .event-date { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+    .event-desc { font-size: 13px; line-height: 1.55; color: var(--text); margin: 0; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 0; }
+    @media (max-width: 560px) { .metric-row { grid-template-columns: 1fr; } }
+    .metric-cell { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; text-align: center; }
+    .metric-cell .k { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .metric-cell .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .metric-cell .v.loss { color: var(--red); }
+    .advice-grid { display: grid; gap: 14px; }
+    .advice-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+    .advice-card h4 { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--text); }
+    .advice-card p { margin: 0; font-size: 13px; line-height: 1.65; color: var(--text-muted); }
+    .advice-card .num { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .rec-voice { margin: 0 0 12px; padding: 0; background: none; border: none; box-shadow: none; }
+    .rec-voice__text { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); font-weight: 400; }
+    .rec-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+    @media (max-width: 560px) {
+      .rec-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+      }
+      .rec-card { flex: 0 0 min(44vw, 168px); min-width: min(44vw, 168px); scroll-snap-align: start; }
+    }
+    .rec-card { background: rgba(0,0,0,0.22); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; min-height: 0; transition: border-color 0.2s, box-shadow 0.2s; border-top-width: 3px; border-top-style: solid; }
+    .rec-card--spot { border-top-color: #3b82f6; }
+    .rec-card--copy { border-top-color: #8b5cf6; }
+    .rec-card--act { border-top-color: #f59e0b; }
+    .rec-card:hover { border-color: rgba(255,255,255,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .rec-title { font-size: 13px; font-weight: 800; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .rec-copy { font-size: 11px; line-height: 1.45; color: var(--text-muted); flex: 1; margin: 0 0 10px; }
+    .rec-cta { font-size: 12px; font-weight: 700; text-decoration: none; margin-top: auto; padding: 6px 0; border-radius: 8px; text-align: center; }
+    .rec-card--spot .rec-cta { color: #93c5fd; background: rgba(59,130,246,0.12); }
+    .rec-card--copy .rec-cta { color: #c4b5fd; background: rgba(139,92,246,0.12); }
+    .rec-card--act .rec-cta { color: #fcd34d; background: rgba(245,158,11,0.12); }
+    .rec-cta:hover { filter: brightness(1.08); text-decoration: none; }
+    .mode-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+    .mode-tab { flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-muted); font-size: 13px; font-weight: 800; cursor: pointer; }
+    .mode-tab.active { border-color: rgba(59,130,246,0.65); background: rgba(59,130,246,0.14); color: var(--text); }
+    .mode-hint { margin: 0 0 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .pos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 560px) { .pos-grid { grid-template-columns: 1fr; } }
+    .pos-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+    .pos-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .pos-symbol { font-size: 13px; font-weight: 900; margin-bottom: 4px; }
+    .pos-meta { font-size: 12px; color: var(--text-muted); }
+    .status { font-size: 11px; font-weight: 900; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); white-space: nowrap; }
+    .status-liq { color: #f87171; border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.08); }
+    .status-open { color: #34d399; border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.08); }
+    .pos-metrics { display: grid; gap: 8px; }
+    .pos-metric { display: flex; justify-content: space-between; gap: 14px; font-size: 12px; color: var(--text-muted); }
+    .pos-metric b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
+    .pos-metric b.loss { color: #f87171; }
+    .reason-compact { font-size: 13px; line-height: 1.65; color: var(--text-muted); padding: 12px 14px; background: rgba(255,255,255,0.02); border-radius: 12px; border-left: 3px solid var(--accent); margin-bottom: 18px; }
+    .pos-list { display: grid; gap: 16px; margin-bottom: 16px; }
+    .pos-item { margin-bottom: 0; }
+    .badge-iso { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35); color: #93c5fd; }
+    .badge-cross { background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.35); color: #f87171; }
+    /* —— 入口页：白底列表行（对齐仓位历史截图） —— */
+    .ph-entry-page {
+      background: #f7f8fa;
+      color: #333;
+    }
+    .ph-entry-page .layout {
+      max-width: 960px;
+      padding: 16px 16px 40px;
+    }
+    @media (min-width: 768px) {
+      .ph-entry-page .layout { padding: 20px 24px 48px; }
+    }
+    .ph-page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .ph-page-lead {
+      font-size: 12px;
+      color: #999;
+      margin: 0 0 20px;
+      line-height: 1.5;
+    }
+    .ph-card {
+      background: #fff;
+      padding: 16px 16px 18px;
+      margin-bottom: 0;
+    }
+    @media (min-width: 768px) {
+      .ph-card { padding-left: 20px; padding-right: 20px; }
+    }
+    .ph-list { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+    .ph-list .ph-card { border-bottom: 1px solid #ebebeb; border-top: 0; }
+    .ph-list .ph-card:last-child { border-bottom: 0; }
+    .ph-head {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      margin-bottom: 14px;
+    }
+    .ph-pair {
+      font-size: 14px;
+      font-weight: 700;
+      color: #000;
+    }
+    .ph-mode {
+      font-size: 13px;
+      color: #333;
+      font-weight: 400;
+    }
+    .ph-dir {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .ph-dir--short {
+      color: #f6465d;
+      background: rgba(246, 70, 93, 0.12);
+    }
+    .ph-dir--long {
+      color: #0ecb81;
+      background: rgba(14, 203, 129, 0.12);
+    }
+    .ph-status {
+      font-size: 12px;
+      color: #999;
+    }
+    .ph-head-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ph-icon-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: #bbb;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .ph-icon-btn:hover { color: #666; background: #f0f0f0; }
+    .ph-icon-btn svg { width: 18px; height: 18px; }
+    .ph-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px 20px;
+      align-items: start;
+    }
+    @media (max-width: 720px) {
+      .ph-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 400px) {
+      .ph-grid { grid-template-columns: 1fr; }
+    }
+    .ph-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+    .ph-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .ph-label {
+      color: #999;
+      font-size: 12px;
+    }
+    .ph-val {
+      color: #333;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      word-break: break-all;
+    }
+    .ph-col--actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+    .ph-pnl {
+      color: #f6465d;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-decoration: underline;
+      text-decoration-style: dashed;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(246, 70, 93, 0.5);
+      cursor: default;
+    }
+    .ph-ai-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: flex-start;
+      margin-top: 2px;
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5b21b6;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(168, 85, 247, 0.12) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 6px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: filter 0.15s, box-shadow 0.15s;
+    }
+    .ph-ai-btn:hover {
+      filter: brightness(0.97);
+      box-shadow: 0 2px 8px rgba(91, 33, 182, 0.08);
+    }
+    .ph-ai-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 100%;
+      margin-bottom: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.88);
+      border-radius: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 10;
+    }
+    .ph-ai-btn:hover::after {
+      opacity: 1;
+    }
+    /* 弹层仍为深色，避免继承入口页 body 字色 */
+    .ph-entry-page .overlay .drawer {
+      color: #e4e4e7;
+    }
+    .pos-table { width: 100%; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+    .pos-thead { display: grid; grid-template-columns: 1.2fr 0.9fr 1.2fr 0.7fr; gap: 0; padding: 14px 18px; background: rgba(0,0,0,0.25); border-bottom: 1px solid var(--border); }
+    .pos-thead div { font-size: 12px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .pos-trow { display: grid; grid-template-columns: 1.2fr 0.9fr 1.2fr 0.7fr; gap: 0; padding: 16px 18px; border-bottom: 1px solid rgba(42,42,46,0.7); align-items: center; }
+    .pos-trow:last-child { border-bottom: 0; }
+    .pos-tcell { min-width: 0; }
+    .pair-line { display: flex; align-items: center; gap: 10px; }
+    .pair-title { font-weight: 900; font-size: 14px; }
+    .muted { color: var(--text-muted); font-size: 12px; }
+    .mono { font-variant-numeric: tabular-nums; }
+    .prices { display: grid; gap: 6px; }
+    .ai-btn { justify-content: flex-end; }
+    .error-msg { color: var(--red); margin-bottom: 12px; }
+    .retry-row { margin-top: 16px; }
+  </style>
+</head>
+<body class="ph-entry-page">
+  <div class="layout">
+    <h1 class="ph-page-title">仓位历史</h1>
+    <p class="ph-page-lead">以下为爆仓记录示例排版；点击「AI 解读」查看逐仓 / 全仓原因说明。</p>
+
+    <div class="ph-list">
+    <article class="ph-card">
+      <header class="ph-head">
+        <span class="ph-pair">BTCUSDT 永续</span>
+        <span class="ph-mode">逐仓 20x</span>
+        <span class="ph-dir ph-dir--short">空</span>
+        <span class="ph-status">完全平仓</span>
+      </header>
+      <div class="ph-grid">
+        <div class="ph-col">
+          <div class="ph-cell">
+            <span class="ph-label">开仓时间</span>
+            <span class="ph-val">2026-03-17 12:08:22</span>
+          </div>
+          <div class="ph-cell">
+            <span class="ph-label">最后平仓时间</span>
+            <span class="ph-val">2026-03-17 14:32:05</span>
+          </div>
+        </div>
+        <div class="ph-col">
+          <div class="ph-cell">
+            <span class="ph-label">开仓均价</span>
+            <span class="ph-val">67,000.0 USDT</span>
+          </div>
+          <div class="ph-cell">
+            <span class="ph-label">平仓均价</span>
+            <span class="ph-val">69,682.5 USDT</span>
+          </div>
+        </div>
+        <div class="ph-col">
+          <div class="ph-cell">
+            <span class="ph-label">最大持仓量</span>
+            <span class="ph-val">93,600.00 USDT</span>
+          </div>
+          <div class="ph-cell">
+            <span class="ph-label">已平仓量</span>
+            <span class="ph-val">93,600.00 USDT</span>
+          </div>
+        </div>
+        <div class="ph-col ph-col--actions">
+          <div class="ph-cell">
+            <span class="ph-label">仓位盈亏</span>
+            <span class="ph-pnl" title="强平成交盈亏（示例）">−3,744.47 USDT</span>
+          </div>
+          <a class="ph-ai-btn" id="btnIsolated" href="#" title="可查看本仓位的相关爆仓信息" data-tooltip="可查看本仓位的相关爆仓信息">AI 解读</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="ph-card">
+      <header class="ph-head">
+        <span class="ph-pair">BTCUSDT 永续</span>
+        <span class="ph-mode">全仓 20x</span>
+        <span class="ph-dir ph-dir--short">空</span>
+        <span class="ph-status">完全平仓</span>
+      </header>
+      <div class="ph-grid">
+        <div class="ph-col">
+          <div class="ph-cell">
+            <span class="ph-label">开仓时间</span>
+            <span class="ph-val">2026-03-17 11:15:00</span>
+          </div>
+          <div class="ph-cell">
+            <span class="ph-label">最后平仓时间</span>
+            <span class="ph-val">2026-03-17 14:32:05</span>
+          </div>
+        </div>
+        <div class="ph-col">
+          <div class="ph-cell">
+            <span class="ph-label">开仓均价</span>
+            <span class="ph-val">67,000.0 USDT</span>
+          </div>
+          <div class="ph-cell">
+            <span class="ph-label">强平价</span>
+            <span class="ph-val">67,580.0 USDT</span>
+          </div>
+        </div>
+        <div class="ph-col">
+          <div class="ph-cell">
+            <span class="ph-label">受影响仓位</span>
+            <span class="ph-val">2 个（示例）</span>
+          </div>
+          <div class="ph-cell">
+            <span class="ph-label">爆仓标记价</span>
+            <span class="ph-val">67,612.3 USDT</span>
+          </div>
+        </div>
+        <div class="ph-col ph-col--actions">
+          <div class="ph-cell">
+            <span class="ph-label">仓位盈亏</span>
+            <span class="ph-pnl" title="本笔仓位盈亏（示例）">−856.00 USDT (−18.62%)</span>
+          </div>
+          <a class="ph-ai-btn" id="btnCross" href="#" title="可查看本仓位的相关爆仓信息" data-tooltip="可查看本仓位的相关爆仓信息">AI 解读</a>
+        </div>
+      </div>
+    </article>
+    </div>
+
+    <p class="ph-page-lead" style="margin-top: 16px; margin-bottom: 0;">注：逐仓和全仓的计算规则有一定差异，页面上有所体现，可通过以上两个仓位分别查看。</p>
+  </div>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="drawer" role="dialog" aria-labelledby="drawer-title">
+      <div class="drawer-header">
+        <div class="drawer-title-wrap">
+          <h2 class="drawer-title" id="drawer-title">爆仓原因解读</h2>
+          <p class="drawer-sub"><span class="pill">BTC/USDT 永续</span><span class="pill">空</span><span class="pill">20x</span></p>
+        </div>
+        <button type="button" class="drawer-close" id="closeDrawer" aria-label="关闭">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawerBody">
+        <div class="loading" id="loadingState">
+          <div class="loading-spinner"></div>
+          <div>正在生成解读…</div>
+        </div>
+        <div id="contentState" style="display: none;">
+          <div class="modal-section">
+            <h3 class="modal-h">时间回顾</h3>
+            <div class="event-timeline">
+              <div class="event-item event-item--warn">
+                <div class="event-dot"></div>
+                <div>
+                  <div class="event-card">
+                    <div class="event-card-head">
+                      <span class="event-card-datetime">2026-03-17 14:28:33</span>
+                      <span class="event-tag">风险预警</span>
+                    </div>
+                    <p class="event-caption-text">保证金率升至 96.50%，已达预警阈值；已通过邮件提醒您关注仓位风险。</p>
+                  </div>
+                </div>
+              </div>
+              <div class="event-item event-item--liq">
+                <div class="event-dot"></div>
+                <div>
+                  <div class="event-card">
+                    <div class="event-card-head">
+                      <span class="event-card-datetime">2026-03-17 14:32:05</span>
+                      <span class="event-tag">强制平仓</span>
+                    </div>
+                    <p class="event-caption-text">保证金率已超过100%，已触发强平条件，系统执行强制平仓。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-h">保证金模式</h3>
+            <div class="mode-tabs" role="tablist" aria-label="保证金模式">
+              <button type="button" class="mode-tab" data-mode="isolated" id="tabIsolated">逐仓</button>
+              <button type="button" class="mode-tab active" data-mode="cross" id="tabCross">全仓</button>
+            </div>
+            <p class="mode-hint">全仓强平触发的是保证金池阈值，可能导致“部分仓位强平”。下面切换到对应模式查看详情。</p>
+          </div>
+
+          <div class="modal-section mode-panel" id="panelIsolated" style="display: none;">
+            <h3 class="modal-h">逐仓分析</h3>
+            <div class="advice-grid">
+              <div class="advice-card">
+                <h4>杠杆与波动空间</h4>
+                <p>本笔 <span class="num">20x</span> 杠杆做空：爆仓时标记价 <span class="num">69,682.5</span> 已高于强平价 <span class="num">69,650</span>，价差仅约 <span class="num">32.5 USDT</span>。若用 <span class="num">5x</span>，强平价会明显下移、缓冲更大。建议下次适当降杠杆或设止损。</p>
+              </div>
+              <div class="advice-card">
+                <h4>止损建议</h4>
+                <p>本笔<strong>未设置止损</strong>。若提前在强平价下方设止损（如 <span class="num">69,600</span> 附近），或可先于强平离场。下次开仓建议在下单区勾选止损或设置条件单。</p>
+              </div>
+              <div class="advice-card">
+                <h4>保证金与预警</h4>
+                <p><strong>14:28</strong> 已向您发送 96.50% 保证金率预警邮件；若当时追加保证金或减仓，或可延缓强平。建议保持邮件/站内信畅通，便于及时响应。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section mode-panel" id="panelCross">
+            <h3 class="modal-h">全仓分析</h3>
+            <div class="reason-compact">本次为全仓模式：当保证金池达到强平阈值时，系统会对“受影响仓位”执行强平。本次示例中，2 个仓位中 <strong>1 个已强平</strong>，<strong>1 个未强平</strong>；是否全部强平以受影响仓位列表为准。</div>
+
+            <div style="margin: 0 0 12px;">
+              <div class="modal-h" style="margin: 0 0 10px; text-transform:none; letter-spacing:0; font-size:12px;">受影响仓位列表</div>
+              <div class="pos-grid">
+                <div class="pos-card">
+                  <div class="pos-top">
+                    <div>
+                      <div class="pos-symbol">BTC/USDT 永续</div>
+                      <div class="pos-meta">做空 · 20x</div>
+                    </div>
+                    <span class="status status-liq">已强平</span>
+                  </div>
+                  <div class="pos-metrics">
+                    <div class="pos-metric"><span>强平价</span><b>69,650.00</b></div>
+                    <div class="pos-metric"><span>当时未实现盈亏</span><b class="loss">-3,744.47 USDT</b></div>
+                  </div>
+                </div>
+                <div class="pos-card">
+                  <div class="pos-top">
+                    <div>
+                      <div class="pos-symbol">BTC/USDT 永续</div>
+                      <div class="pos-meta">做空 · 10x</div>
+                    </div>
+                    <span class="status status-open">未强平</span>
+                  </div>
+                  <div class="pos-metrics">
+                    <div class="pos-metric"><span>强平价</span><b>68,100.00</b></div>
+                    <div class="pos-metric"><span>当时未实现盈亏</span><b>+120.00 USDT</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="advice-grid">
+              <div class="advice-card">
+                <h4>下一步怎么做</h4>
+                <p>全仓下建议更早降低风险：设置止损/减仓条件，或在预警触发后及时补保证金。把“最大可承受亏损”先定下来，避免被强平一次性带走。</p>
+              </div>
+              <div class="advice-card">
+                <h4>预警要及时</h4>
+                <p><strong>14:28</strong> 已发出 96.50% 保证金率预警邮件。建议保留邮件/站内信通知，确认自己能在强平前看到信息并采取动作。</p>
+              </div>
+              <div class="advice-card">
+                <h4>可能还会“部分强平”</h4>
+                <p>全仓是保证金池机制：当触发阈值后，不同仓位因杠杆、强平价、未实现盈亏贡献不同，结果可能出现“部分强平”。以受影响仓位列表为准。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-h">为您推荐</h3>
+            <blockquote class="rec-voice" role="note"><p class="rec-voice__text">"投资是场马拉松，没必要因为一次强平而沮丧。推荐您关注以下更温和、低风险的产品。"</p></blockquote>
+            <div class="rec-grid">
+              <div class="rec-card rec-card--spot">
+                <div class="rec-title">现货交易</div>
+                <p class="rec-copy">无杠杆、无强平；价值选标的、拉长周期。</p>
+                <a class="rec-cta" href="#">进入现货交易</a>
+              </div>
+              <div class="rec-card rec-card--copy">
+                <div class="rec-title">跟单交易</div>
+                <p class="rec-copy">跟随全球顶级交易员操作，智能跟隨，自動執行，輕鬆跟單，穩步盈利。</p>
+                <a class="rec-cta" href="#">浏览跟单交易</a>
+              </div>
+              <div class="rec-card rec-card--act">
+                <div class="rec-title">活动中心</div>
+                <p class="rec-copy">关注平台活动，积极参与即有机会获得体验金、返现等收益。</p>
+                <a class="rec-cta" href="#">查看活动中心</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div id="errorState" style="display: none;">
+          <p class="error-msg">解读生成失败，请稍后重试。</p>
+          <div class="retry-row">
+            <button type="button" class="btn btn-primary" id="retryBtn">重试</button>
+            <button type="button" class="btn btn-ghost" id="closeAfterError">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  var overlay = document.getElementById('overlay');
+  var drawerBody = document.getElementById('drawerBody');
+  var loadingState = document.getElementById('loadingState');
+  var contentState = document.getElementById('contentState');
+  var errorState = document.getElementById('errorState');
+
+  var panelIsolated = document.getElementById('panelIsolated');
+  var panelCross = document.getElementById('panelCross');
+  var tabIsolated = document.getElementById('tabIsolated');
+  var tabCross = document.getElementById('tabCross');
+
+  function setMarginMode(mode) {
+    var isIsolated = mode === 'isolated';
+    if (panelIsolated) panelIsolated.style.display = isIsolated ? 'block' : 'none';
+    if (panelCross) panelCross.style.display = isIsolated ? 'none' : 'block';
+    if (tabIsolated) tabIsolated.classList.toggle('active', isIsolated);
+    if (tabCross) tabCross.classList.toggle('active', !isIsolated);
+  }
+
+  function showLoading() {
+    loadingState.style.display = 'block';
+    contentState.style.display = 'none';
+    errorState.style.display = 'none';
+  }
+  function showContent() {
+    loadingState.style.display = 'none';
+    contentState.style.display = 'block';
+    errorState.style.display = 'none';
+  }
+  function showError() {
+    loadingState.style.display = 'none';
+    contentState.style.display = 'none';
+    errorState.style.display = 'block';
+  }
+
+  function openDrawer() {
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    setMarginMode('cross');
+    showLoading();
+    // 原型模拟：1.5 秒后展示解读内容（实际应请求 AI 接口）
+    setTimeout(function () {
+      showContent();
+    }, 1500);
+  }
+
+  function closeDrawer() {
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function simulateError() {
+    showLoading();
+    setTimeout(function () {
+      showError();
+    }, 800);
+  }
+
+  function buildModeLinks() {
+    var params = new URLSearchParams(location.search);
+    var orderId = params.get('orderId') || 'demo_order';
+    var symbol = params.get('symbol') || 'BTCUSDT 永续';
+
+    var baseIsolated = 'liquidation-explanation-isolated.html';
+    var baseCross = 'liquidation-explanation-cross.html';
+
+    var side = params.get('side') || 'short';
+    var isolatedHref =
+      baseIsolated + '?orderId=' + encodeURIComponent(orderId) +
+      '&symbol=' + encodeURIComponent(symbol) +
+      '&marginMode=isolated&side=' + encodeURIComponent(side);
+    ['openAvg', 'markPrice', 'liqPrice', 'uplUSDT', 'leverage', 'qty', 'quantity', 'size'].forEach(function (k) {
+      var v = params.get(k);
+      if (v != null && v !== '') isolatedHref += '&' + k + '=' + encodeURIComponent(v);
+    });
+    var crossHref =
+      baseCross + '?orderId=' + encodeURIComponent(orderId) +
+      '&symbol=' + encodeURIComponent(symbol) +
+      '&marginMode=cross&side=' + encodeURIComponent(side);
+
+    var btnIsolated = document.getElementById('btnIsolated');
+    var btnCross = document.getElementById('btnCross');
+    if (btnIsolated) btnIsolated.href = isolatedHref;
+    if (btnCross) btnCross.href = crossHref;
+  }
+
+  buildModeLinks();
+
+  var openBtn = document.getElementById('openExplanation');
+  if (openBtn) openBtn.addEventListener('click', openDrawer);
+
+  var closeBtn = document.getElementById('closeDrawer');
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+
+  if (tabIsolated) tabIsolated.addEventListener('click', function () { setMarginMode('isolated'); });
+  if (tabCross) tabCross.addEventListener('click', function () { setMarginMode('cross'); });
+
+  var retryBtn = document.getElementById('retryBtn');
+  if (retryBtn) retryBtn.addEventListener('click', function () {
+    showLoading();
+    setTimeout(showContent, 1200);
+  });
+
+  var closeAfterErrorBtn = document.getElementById('closeAfterError');
+  if (closeAfterErrorBtn) closeAfterErrorBtn.addEventListener('click', closeDrawer);
+
+  if (overlay) overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeDrawer();
+  });
+})();
+  </script>
+</body>
+</html>

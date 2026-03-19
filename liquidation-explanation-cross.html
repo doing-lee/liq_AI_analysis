@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>爆仓原因解读 - 全仓 - Toobit</title>
+  <link rel="stylesheet" href="liq-pages.css" />
+</head>
+<body class="liq-page liq-page--light">
+  <div class="liq-wrap">
+    <header class="liq-top">
+      <a class="liq-back" id="backBtn" href="liquidation-explanation.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        返回
+      </a>
+    </header>
+
+    <div class="liq-hero">
+      <h1 id="orderSymbol">BTCUSDT 永续</h1>
+      <div class="liq-mode-row">
+        <span class="liq-chip liq-chip--cross">全仓</span>
+        <span class="liq-chip" id="chipLev">20x</span>
+        <span class="liq-chip" id="chipSide">空</span>
+      </div>
+    </div>
+
+    <section class="liq-card" aria-labelledby="sec-timeline">
+      <div class="liq-sec-head" id="sec-timeline">
+        <span class="liq-sec-num">1</span>
+        <div>
+          <h2 class="liq-sec-title">时间回顾</h2>
+        </div>
+      </div>
+      <div class="liq-tl">
+        <div class="liq-tl-item liq-tl-item--warn">
+          <div class="liq-tl-dot"></div>
+          <div class="liq-tl-card">
+            <div class="liq-tl-head">
+              <span class="liq-tl-datetime" id="warnTime">2026-03-17 14:28:33</span>
+              <span class="liq-tag">风险预警</span>
+            </div>
+            <p class="liq-caption-text">保证金率升至 96.50%，已达预警阈值；已通过邮件提醒您关注仓位风险。</p>
+          </div>
+        </div>
+        <div class="liq-tl-item liq-tl-item--liq">
+          <div class="liq-tl-dot"></div>
+          <div class="liq-tl-card">
+            <div class="liq-tl-head">
+              <span class="liq-tl-datetime" id="liqTimeEl">2026-03-17 14:32:05</span>
+              <span class="liq-tag">强制平仓</span>
+            </div>
+            <p class="liq-caption-text" id="liqDesc">全仓下多合约共用保证金；账户保证金率已超过 100%，系统对受影响仓位执行强制平仓。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="liq-card" aria-labelledby="sec-calc">
+      <div class="liq-sec-head" id="sec-calc">
+        <span class="liq-sec-num">2</span>
+        <div>
+          <h2 class="liq-sec-title">计算验证</h2>
+        </div>
+      </div>
+      <div class="liq-summary-table-wrap" id="liqSummaryTableWrap"></div>
+      <div id="calcSteps"></div>
+    </section>
+
+    <section class="liq-card" aria-labelledby="sec-advice">
+      <div class="liq-sec-head" id="sec-advice">
+        <span class="liq-sec-num">3</span>
+        <div>
+          <h2 class="liq-sec-title">合约操作建议</h2>
+        </div>
+      </div>
+      <div class="liq-advice-stack" id="adviceRow">
+        <div class="liq-advice">
+          <h4>合理降低杠杆</h4>
+          <p id="advLev">—</p>
+        </div>
+        <div class="liq-advice">
+          <h4>及时设置止损</h4>
+          <p>全仓下多仓共用保证金，一单亏损会拖累整体风险度。建议对主要仓位设置止损或条件单，避免多合约同时向不利方向波动时一次性触发强平。</p>
+        </div>
+        <div class="liq-advice">
+          <h4>关注预警信息</h4>
+          <p>在强平前系统会触发保证金率风险预警通知，建议您保持邮箱等通知渠道畅通，收到预警后及时评估减仓、追加保证金或平仓，避免被动强平。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="liq-card" aria-labelledby="sec-more">
+      <div class="liq-sec-head" id="sec-more">
+        <span class="liq-sec-num">4</span>
+        <div>
+          <h2 class="liq-sec-title">了解更多</h2>
+        </div>
+      </div>
+      <div class="liq-more-plain">
+        <p class="liq-more-lead">相关内容可以参考以下链接。</p>
+        <div class="liq-more-block">
+          <p class="liq-more-item">强制平仓概述<br /><a class="liq-more-url" href="https://www.toobit.com/zh-CN/support/futures/liquidation-intro" target="_blank" rel="noopener noreferrer">https://www.toobit.com/zh-CN/support/futures/liquidation-intro</a></p>
+          <p class="liq-more-item">维持保证金率（MMR）：<br /><a class="liq-more-url" href="https://www.toobit.com/zh-CN/support/contracts/maintenance-margin-rate" target="_blank" rel="noopener noreferrer">https://www.toobit.com/zh-CN/support/contracts/maintenance-margin-rate</a></p>
+          <p class="liq-more-item">关于 Toobit 合约减仓和爆仓的计算说明<br /><a class="liq-more-url" href="https://www.toobit.com/zh-CN/academy/articles/liquidation-and-adl" target="_blank" rel="noopener noreferrer">https://www.toobit.com/zh-CN/academy/articles/liquidation-and-adl</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="liq-card liq-card--rec" aria-labelledby="sec-rec">
+      <div class="liq-sec-head" id="sec-rec">
+        <span class="liq-sec-num">5</span>
+        <div>
+          <h2 class="liq-sec-title">为您推荐</h2>
+        </div>
+      </div>
+      <blockquote class="liq-voice" role="note">
+        <p class="liq-voice__text">"投资是场马拉松，没必要因为一次强平而沮丧。推荐您关注以下更温和、低风险的产品。"</p>
+      </blockquote>
+      <div class="liq-lowrisk-row" role="list">
+        <article class="liq-lowrisk-card liq-lowrisk-card--spot" role="listitem">
+          <h3 class="liq-lowrisk-card__title">现货交易</h3>
+          <p class="liq-lowrisk-card__hint">现货无杠杆、无强平；按价值选标的、拉长周期，更适合价值投资。</p>
+          <a class="liq-lowrisk-card__cta" href="#">进入现货交易</a>
+        </article>
+        <article class="liq-lowrisk-card liq-lowrisk-card--copy" role="listitem">
+          <h3 class="liq-lowrisk-card__title">跟单交易</h3>
+          <p class="liq-lowrisk-card__hint">跟随全球顶级交易员操作，智能跟隨，自動執行，輕鬆跟單，穩步盈利。</p>
+          <a class="liq-lowrisk-card__cta" href="#">浏览跟单交易</a>
+        </article>
+        <article class="liq-lowrisk-card liq-lowrisk-card--act" role="listitem">
+          <h3 class="liq-lowrisk-card__title">活动中心</h3>
+          <p class="liq-lowrisk-card__hint">关注平台活动，积极参与即有机会获得体验金、返现等收益。</p>
+          <a class="liq-lowrisk-card__cta" href="#">查看活动中心</a>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      function fmt(n, d) {
+        var x = Number(n);
+        if (!isFinite(x)) return '—';
+        if (d == null) d = 2;
+        return x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+      }
+      function signed(u) {
+        if (!isFinite(u)) return '—';
+        return (u < 0 ? '−' : '+') + fmt(Math.abs(u), 2);
+      }
+      function escHtml(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      function titleSymbol(raw) {
+        var s = (raw || '').trim();
+        if (!s) return 'BTCUSDT 永续';
+        if (/^BTC\s*\/\s*USDT(\s*永续)?$/i.test(s)) return 'BTCUSDT 永续';
+        return s;
+      }
+      function parseSide(p) {
+        var s = String(p || '').toLowerCase().trim();
+        if (s === 'long' || s === '1' || s === '多' || s === 'buy') return 'long';
+        if (s === 'short' || s === '2' || s === '空' || s === 'sell') return 'short';
+        return 'short';
+      }
+
+      var liqAt = String(params.get('liqTime') || params.get('liquidationAt') || '2026-03-17 14:32:05').trim();
+      var warnAt = String(params.get('warnTime') || '2026-03-17 14:28:33').trim();
+      var symbol = titleSymbol(params.get('symbol'));
+      var sideKey = parseSide(params.get('side') || params.get('posSide'));
+
+      var entry1 = parseFloat(params.get('openAvg')) || 67000;
+      var mark1 = parseFloat(params.get('markPrice'));
+      if (!isFinite(mark1)) mark1 = sideKey === 'short' ? 69682.5 : 64317.5;
+      var lev1 = parseFloat(params.get('leverage')) || 20;
+      var liq1 = parseFloat(params.get('liqPrice'));
+      if (!isFinite(liq1)) liq1 = sideKey === 'short' ? 69650 : 64350;
+
+      var sym2 = params.get('symbol2') || 'ETHUSDT 永续';
+      var sym3 = params.get('symbol3') || 'SOLUSDT 永续';
+      var entry2 = parseFloat(params.get('openAvg2')) || 3200;
+      var mark2 = parseFloat(params.get('markPrice2')) || 3250;
+      var entry3 = parseFloat(params.get('openAvg3')) || 138;
+      var mark3 = parseFloat(params.get('markPrice3')) || 134;
+
+      var upl1 = parseFloat(params.get('upl1'));
+      if (!isFinite(upl1)) {
+        var q1 = parseFloat(params.get('qty')) || 0.298;
+        upl1 = sideKey === 'short' ? (entry1 - mark1) * q1 : (mark1 - entry1) * q1;
+      }
+      var qty1 = Math.abs(entry1 - mark1) > 1e-8 ? upl1 / (sideKey === 'short' ? (entry1 - mark1) : (mark1 - entry1)) : 0.298;
+      var qty1Disp = (symbol.indexOf('BTC') >= 0 ? fmt(Math.abs(qty1), 5) + ' BTC' : fmt(Math.abs(qty1), 5));
+
+      var upl2 = parseFloat(params.get('upl2'));
+      if (!isFinite(upl2)) upl2 = -200;
+      var upl3 = parseFloat(params.get('upl3'));
+      if (!isFinite(upl3)) upl3 = -100;
+
+      var q2 = parseFloat(params.get('qty2')) || 4;
+      var q3 = parseFloat(params.get('qty3')) || 25;
+      var qty2Disp = fmt(q2, 2) + ' ETH';
+      var qty3Disp = fmt(q3, 2) + ' SOL';
+
+      var mm1 = parseFloat(params.get('mm1'));
+      if (!isFinite(mm1)) mm1 = 520;
+      var mm2 = parseFloat(params.get('mm2'));
+      if (!isFinite(mm2)) mm2 = 350;
+      var mm3 = parseFloat(params.get('mm3'));
+      if (!isFinite(mm3)) mm3 = 280;
+
+      var balance = parseFloat(params.get('walletUSDT'));
+      if (!isFinite(balance)) balance = 2000;
+      var fee = parseFloat(params.get('feeUSDT'));
+      if (!isFinite(fee)) fee = 20;
+
+      var sigmaU = upl1 + upl2 + upl3;
+      var sigmaM = mm1 + mm2 + mm3;
+      var equity = balance + sigmaU - fee;
+      var ratioPct = equity > 0 ? (sigmaM / equity) * 100 : NaN;
+
+      document.getElementById('orderSymbol').textContent = symbol;
+      document.getElementById('chipLev').textContent = Math.round(lev1) + 'x';
+      var chipSide = document.getElementById('chipSide');
+      chipSide.textContent = sideKey === 'long' ? '多' : '空';
+      chipSide.className = 'liq-chip liq-chip--dir ' + (sideKey === 'long' ? 'liq-chip--long' : 'liq-chip--short');
+      document.getElementById('liqTimeEl').textContent = liqAt;
+      document.getElementById('warnTime').textContent = warnAt;
+
+      var dir2 = parseSide(params.get('side2') || 'short') === 'long' ? '多' : '空';
+      var dir3 = parseSide(params.get('side3') || 'long') === 'long' ? '多' : '空';
+      var dir1 = sideKey === 'long' ? '多' : '空';
+
+      document.getElementById('liqSummaryTableWrap').innerHTML =
+        '<table class="liq-pos-summary-table" role="grid" aria-label="全仓内强平相关合约">' +
+        '<thead><tr>' +
+        '<th scope="col">合约</th><th scope="col">数量</th><th scope="col">模式</th>' +
+        '<th scope="col">方向</th>' +
+        '<th scope="col">开仓均价</th><th scope="col">强平时标记价格</th>' +
+        '</tr></thead><tbody>' +
+        '<tr><td>' + escHtml(symbol) + '</td><td>' + escHtml(qty1Disp) + '</td><td>全仓</td><td>' + dir1 + '</td><td>' + fmt(entry1, 2) + '</td><td>' + fmt(mark1, 2) + '</td></tr>' +
+        '<tr><td>' + escHtml(sym2) + '</td><td>' + escHtml(qty2Disp) + '</td><td>全仓</td><td>' + dir2 + '</td><td>' + fmt(entry2, 2) + '</td><td>' + fmt(mark2, 2) + '</td></tr>' +
+        '<tr><td>' + escHtml(sym3) + '</td><td>' + escHtml(qty3Disp) + '</td><td>全仓</td><td>' + dir3 + '</td><td>' + fmt(entry3, 2) + '</td><td>' + fmt(mark3, 2) + '</td></tr>' +
+        '</tbody></table>';
+
+      var uplLine1 = sideKey === 'short'
+        ? '（' + fmt(entry1, 2) + ' − ' + fmt(mark1, 2) + '）× ' + fmt(Math.abs(qty1), 5) + ' BTC ≈ ' + signed(upl1) + ' USDT'
+        : '（' + fmt(mark1, 2) + ' − ' + fmt(entry1, 2) + '）× ' + fmt(Math.abs(qty1), 5) + ' BTC ≈ ' + signed(upl1) + ' USDT';
+      var uplLine2 = '（' + fmt(entry2, 2) + ' − ' + fmt(mark2, 2) + '）× ' + fmt(q2, 2) + ' ETH ≈ ' + signed(upl2) + ' USDT';
+      var uplLine3 = '（' + fmt(mark3, 2) + ' − ' + fmt(entry3, 2) + '）× ' + fmt(q3, 2) + ' SOL ≈ ' + signed(upl3) + ' USDT';
+
+      var equityBox =
+        fmt(balance, 2) + ' + (' + fmt(sigmaU, 2) + ') − ' + fmt(fee, 2) + ' = ' + fmt(equity, 2) + ' USDT';
+
+      var n1 = Math.abs(qty1) * entry1;
+      var n2 = q2 * entry2;
+      var n3 = q3 * entry3;
+      function mmRatePct(mm, n) {
+        if (!isFinite(n) || n <= 0) return 0;
+        return (mm / n) * 100;
+      }
+      var mmLine1 =
+        escHtml(symbol) +
+        '：' +
+        fmt(n1, 2) +
+        ' USDT × ' +
+        mmRatePct(mm1, n1).toFixed(2) +
+        '% = ' +
+        fmt(mm1, 2) +
+        ' USDT';
+      var mmLine2 =
+        escHtml(sym2) +
+        '：' +
+        fmt(n2, 2) +
+        ' USDT × ' +
+        mmRatePct(mm2, n2).toFixed(2) +
+        '% = ' +
+        fmt(mm2, 2) +
+        ' USDT';
+      var mmLine3 =
+        escHtml(sym3) +
+        '：' +
+        fmt(n3, 2) +
+        ' USDT × ' +
+        mmRatePct(mm3, n3).toFixed(2) +
+        '% = ' +
+        fmt(mm3, 2) +
+        ' USDT';
+      var mmTotalLine =
+        '合计：' +
+        mm1.toFixed(5) +
+        ' + ' +
+        mm2.toFixed(5) +
+        ' + ' +
+        mm3.toFixed(5) +
+        ' = ' +
+        sigmaM.toFixed(5) +
+        ' USDT';
+
+      var ratioBoxHtml = isFinite(ratioPct)
+        ? fmt(sigmaM, 2) + ' ÷ ' + fmt(equity, 2) + ' × 100% = ' + ratioPct.toFixed(2) + '%'
+        : escHtml('账户权益过低或为负，无法按上式作有效除法；强平以系统记录为准。');
+
+      var conclusionHtml;
+      if (isFinite(ratioPct) && equity > 0) {
+        conclusionHtml =
+          '<div class="liq-calc-conclusion">总结：' + escHtml(liqAt) +
+          '，全仓账户保证金率已达到 100%（约 ' + ratioPct.toFixed(2) +
+          '%），相关仓位被强制平仓。</div>';
+      } else {
+        conclusionHtml =
+          '<div class="liq-calc-conclusion">总结：' + escHtml(liqAt) +
+          '，全仓账户已触发强平条件，相关仓位被强制平仓。</div>';
+      }
+
+      document.getElementById('calcSteps').innerHTML =
+        '<div class="liq-calc-lead">' +
+        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 1 步">1</span>' +
+        '<span class="liq-calc-lead-formula">未实现盈亏：</span></p>' +
+        '<p class="liq-calc-upl-def">未实现盈亏（多）=（最新价格 − 开仓均价）× 持仓数量</p>' +
+        '<p class="liq-calc-upl-def liq-calc-upl-def--after">未实现盈亏（空）=（开仓均价 − 最新价格）× 持仓数量</p>' +
+        '<div class="liq-upl-breakdown">' +
+        '<p class="liq-upl-breakdown__row">' + escHtml(symbol) + '：' + uplLine1 + '</p>' +
+        '<p class="liq-upl-breakdown__row">' + escHtml(sym2) + '（空）：' + uplLine2 + '</p>' +
+        '<p class="liq-upl-breakdown__row">' + escHtml(sym3) + '（多）：' + uplLine3 + '</p>' +
+        '<p class="liq-upl-total">总盈亏：' +
+        upl1.toFixed(5) + ' + ' + upl2.toFixed(5) + ' + ' + upl3.toFixed(5) + ' = ' + sigmaU.toFixed(5) + ' USDT</p>' +
+        '</div></div>' +
+
+        '<div class="liq-calc-lead">' +
+        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 2 步">2</span>' +
+        '<span class="liq-calc-lead-formula">账户权益 = 可用保证金 + 总未实现盈亏 − 累计手续费</span></p>' +
+        '<div class="liq-formula liq-formula--indented">' + equityBox + '</div></div>' +
+
+        '<div class="liq-calc-lead">' +
+        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 3 步">3</span>' +
+        '<span class="liq-calc-lead-formula">维持保证金 = 持仓名义价值 × 维持保证金率</span></p>' +
+        '<div class="liq-upl-breakdown liq-upl-breakdown--mm">' +
+        '<p class="liq-upl-breakdown__row">' + mmLine1 + '</p>' +
+        '<p class="liq-upl-breakdown__row">' + mmLine2 + '</p>' +
+        '<p class="liq-upl-breakdown__row">' + mmLine3 + '</p>' +
+        '<p class="liq-upl-total">' + mmTotalLine + '</p>' +
+        '</div></div>' +
+
+        '<div class="liq-calc-lead">' +
+        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 4 步">4</span>' +
+        '<span class="liq-calc-lead-formula">保证金率 = 维持保证金 ÷ 账户权益 × 100%</span></p>' +
+        '<div class="liq-formula liq-formula--indented">' + ratioBoxHtml + '</div></div>' +
+
+        conclusionHtml;
+
+      var entryLiqGapPct = entry1 > 0 ? (Math.abs(liq1 - entry1) / entry1) * 100 : 0;
+      var gapPctStr = entryLiqGapPct.toFixed(2);
+      var dirWord = sideKey === 'long' ? '做多' : '做空';
+      var liqSidePhrase = sideKey === 'short' ? '上方' : '下方';
+      document.getElementById('advLev').innerHTML =
+        '主仓 <strong>' + escHtml(symbol) + '</strong> 为 <span class="hl">' + Math.round(lev1) + 'x</span> ' + dirWord +
+        '。以开仓价为参照，强平价约在其' + liqSidePhrase +
+        ' <span class="hl">' + gapPctStr +
+        '%</span> 处。全仓下其他合约盈亏会一并影响账户权益，建议整体控制杠杆与总暴露，并优先处理亏损较大的仓位。';
+
+      var backBtn = document.getElementById('backBtn');
+      if (backBtn) {
+        var oid = params.get('orderId') || '';
+        var q = oid ? '?orderId=' + encodeURIComponent(oid) + '&symbol=' + encodeURIComponent(symbol) : '?symbol=' + encodeURIComponent(symbol);
+        backBtn.href = 'liquidation-explanation.html' + q;
+      }
+    })();
+  </script>
+</body>
+</html>

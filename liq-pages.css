@@ -1,0 +1,1190 @@
+/* 爆仓解读页 — 逐仓 / 全仓 共用 */
+:root {
+  --liq-bg0: #0a0b0f;
+  --liq-bg1: #12141c;
+  --liq-panel: rgba(22, 24, 34, 0.92);
+  --liq-panel2: rgba(18, 20, 30, 0.98);
+  --liq-border: rgba(255, 255, 255, 0.08);
+  --liq-border2: rgba(255, 255, 255, 0.12);
+  --liq-text: #f4f4f5;
+  --liq-muted: #94a3b8;
+  --liq-dim: #64748b;
+  --liq-red: #f87171;
+  --liq-red-dim: rgba(248, 113, 113, 0.15);
+  --liq-amber: #fbbf24;
+  --liq-green: #34d399;
+  --liq-accent: #38bdf8;
+  --liq-radius: 16px;
+  --liq-radius-sm: 12px;
+  --liq-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --liq-glow-iso: rgba(56, 189, 248, 0.12);
+  --liq-glow-cross: rgba(248, 113, 113, 0.1);
+}
+
+.liq-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--liq-text);
+  background: var(--liq-bg0);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, var(--page-glow, var(--liq-glow-iso)), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(30, 40, 60, 0.4), transparent),
+    linear-gradient(180deg, var(--liq-bg1) 0%, var(--liq-bg0) 45%);
+}
+
+.liq-page--cross {
+  --page-glow: var(--liq-glow-cross);
+}
+
+/* 与入口页 .ph-entry-page .layout 同宽 */
+.liq-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+@media (min-width: 768px) {
+  .liq-wrap {
+    padding: 20px 24px 48px;
+  }
+}
+
+/* 顶栏 */
+.liq-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.liq-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--liq-border2);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--liq-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.liq-back:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--liq-text);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.liq-back svg { width: 18px; height: 18px; opacity: 0.7; }
+
+.liq-badge-ai {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(168, 85, 247, 0.12));
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: #fde68a;
+}
+
+/* 标题区 */
+.liq-hero {
+  margin-bottom: 24px;
+}
+.liq-hero-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--liq-dim);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+.liq-hero h1 {
+  margin: 0 0 12px;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+.liq-hero-lead {
+  margin: 0;
+  font-size: 14px;
+  color: var(--liq-muted);
+  line-height: 1.65;
+  max-width: 52ch;
+}
+
+.liq-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.liq-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--liq-border);
+  color: var(--liq-muted);
+}
+.liq-chip--iso {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.1);
+}
+.liq-chip--cross {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.35);
+  background: var(--liq-red-dim);
+}
+.liq-chip--dir.liq-chip--long {
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.12);
+}
+.liq-chip--dir.liq-chip--short {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.35);
+  background: var(--liq-red-dim);
+}
+
+/* 卡片 */
+.liq-card {
+  background: var(--liq-panel);
+  border: 1px solid var(--liq-border);
+  border-radius: var(--liq-radius);
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--liq-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.liq-sec-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--liq-border);
+}
+.liq-sec-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--liq-muted);
+}
+.liq-sec-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.liq-sec-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--liq-dim);
+  font-weight: 500;
+}
+
+/* 关键指标条 */
+.liq-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 520px) {
+  .liq-metrics { grid-template-columns: repeat(4, 1fr); }
+}
+.liq-metric {
+  background: var(--liq-panel2);
+  border: 1px solid var(--liq-border);
+  border-radius: var(--liq-radius-sm);
+  padding: 14px 14px 12px;
+  text-align: center;
+}
+.liq-metric .k {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--liq-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.liq-metric .v {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--liq-text);
+}
+.liq-metric .v.neg { color: var(--liq-red); }
+.liq-metric .v.pos { color: var(--liq-green); }
+
+/* 时间轴：竖线穿过圆心（轨道宽度与线位置用同一套变量） */
+.liq-tl {
+  position: relative;
+  --tl-pad: 8px;
+  --tl-rail: 26px;
+  padding-left: var(--tl-pad);
+}
+.liq-tl::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  /* 圆心在轨道列水平中心：pad + rail/2；2px 线左移 1px 使几何中心对齐 */
+  left: calc(var(--tl-pad) + var(--tl-rail) / 2 - 1px);
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.45), rgba(248, 113, 113, 0.35));
+  border-radius: 2px;
+  transform: translateZ(0);
+}
+.liq-tl-item {
+  display: grid;
+  grid-template-columns: var(--tl-rail) 1fr;
+  gap: 14px;
+  padding-bottom: 22px;
+}
+.liq-tl-item:last-child { padding-bottom: 0; }
+.liq-tl-dot {
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 8px;
+  margin-left: 0;
+  justify-self: center;
+  flex-shrink: 0;
+  border: 2px solid var(--liq-bg0);
+  box-shadow: 0 0 0 2px currentColor;
+  z-index: 1;
+  position: relative;
+}
+.liq-tl-item--warn .liq-tl-dot { background: var(--liq-amber); color: var(--liq-amber); }
+.liq-tl-item--liq .liq-tl-dot { background: var(--liq-red); color: var(--liq-red); }
+
+.liq-tl-card {
+  border-radius: var(--liq-radius-sm);
+  padding: 16px 18px;
+  border: 1px solid var(--liq-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.liq-tl-item--warn .liq-tl-card {
+  border-color: rgba(251, 191, 36, 0.22);
+  background: rgba(251, 191, 36, 0.05);
+}
+.liq-tl-item--liq .liq-tl-card {
+  border-color: rgba(248, 113, 113, 0.2);
+  background: var(--liq-red-dim);
+}
+
+.liq-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.liq-tl-item--warn .liq-tag { background: rgba(251, 191, 36, 0.2); color: var(--liq-amber); }
+.liq-tl-item--liq .liq-tag { background: rgba(248, 113, 113, 0.22); color: var(--liq-red); }
+
+/* 时间回顾：第一行 时间+标签；第二行仅说明 */
+.liq-tl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-bottom: 10px;
+}
+.liq-tl-head .liq-tl-datetime {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--liq-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.liq-tl-head .liq-tag {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.liq-caption-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--liq-text);
+  margin: 0 0 0;
+}
+.liq-caption-text + .liq-tl-metrics {
+  margin-top: 14px;
+}
+.liq-time {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.liq-time small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--liq-dim);
+  margin-left: 6px;
+  text-transform: lowercase;
+}
+.liq-date { font-size: 12px; color: var(--liq-dim); margin: 8px 0 8px; }
+.liq-date-inline {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--liq-dim);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.liq-desc { margin: 0; font-size: 14px; color: var(--liq-text); line-height: 1.6; }
+
+.liq-tl-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+@media (max-width: 520px) {
+  .liq-tl-metrics { grid-template-columns: 1fr; }
+}
+.liq-tl-metrics .liq-metric { text-align: left; padding: 12px 14px; }
+.liq-tl-metrics .liq-metric .k { text-align: left; }
+
+/* 计算步骤 */
+.liq-calc-intro {
+  font-size: 13px;
+  color: var(--liq-muted);
+  line-height: 1.65;
+  margin: -6px 0 20px;
+  padding: 12px 14px;
+  border-radius: var(--liq-radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--liq-accent);
+}
+
+/* 仓位摘要表（合约 / 数量 / 模式 / 方向 / 开仓均价 / 强平时标记价） */
+.liq-summary-table-wrap {
+  margin: 0 0 22px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+  box-sizing: border-box;
+}
+.liq-pos-summary-table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: 13px;
+  border: none;
+  margin: 0;
+}
+.liq-pos-summary-table th,
+.liq-pos-summary-table td {
+  padding: 11px 12px;
+  text-align: left;
+  border: 1px solid var(--liq-border);
+  vertical-align: middle;
+}
+.liq-pos-summary-table thead th {
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 700;
+  color: var(--liq-muted);
+  white-space: nowrap;
+}
+.liq-pos-summary-table tbody td {
+  color: var(--liq-text);
+  font-variant-numeric: tabular-nums;
+}
+.liq-step {
+  position: relative;
+  padding-left: 36px;
+  margin-bottom: 20px;
+}
+.liq-step:last-child { margin-bottom: 0; }
+.liq-step::before {
+  content: attr(data-step);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  border: 1px solid var(--liq-border2);
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--liq-accent);
+}
+.liq-step h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--liq-text);
+}
+.liq-step p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--liq-muted);
+  line-height: 1.65;
+}
+/* 计算验证：未实现盈亏 — 空心圆序号，与下方 liq-step 方角+主色序号区分 */
+.liq-calc-lead {
+  margin: 0 0 22px;
+  padding: 0;
+}
+.liq-calc-lead-note {
+  margin: 12px 0 0 32px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--liq-dim);
+}
+.liq-calc-lead-note strong {
+  color: var(--liq-text);
+}
+@media (max-width: 400px) {
+  .liq-calc-lead-note {
+    margin-left: 0;
+  }
+}
+.liq-calc-lead-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--liq-text);
+}
+.liq-calc-lead-mark {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--liq-muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--liq-muted);
+  opacity: 0.85;
+}
+.liq-calc-lead-formula {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--liq-text);
+}
+.liq-formula--indented {
+  margin-left: 32px;
+}
+@media (max-width: 400px) {
+  .liq-formula--indented {
+    margin-left: 0;
+  }
+}
+/* 全仓步骤1：公式定义与标题「未实现盈亏：」左对齐（圆点 22px + gap 10px） */
+.liq-calc-upl-def {
+  margin: 0 0 6px 32px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--liq-muted);
+}
+.liq-calc-upl-def--after {
+  margin-bottom: 14px;
+}
+@media (max-width: 400px) {
+  .liq-calc-upl-def {
+    margin-left: 32px;
+  }
+}
+/* 全仓：三仓 UPL 分项 + 总盈亏（同灰块） */
+.liq-upl-breakdown {
+  margin: 0 0 18px 32px;
+  padding: 14px 16px;
+  border-radius: var(--liq-radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--liq-border);
+}
+.liq-upl-breakdown__row {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--liq-muted);
+  font-variant-numeric: tabular-nums;
+}
+.liq-upl-breakdown .liq-upl-total {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--liq-border);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--liq-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 400px) {
+  .liq-upl-breakdown {
+    margin-left: 0;
+  }
+}
+.liq-page--light .liq-upl-breakdown {
+  background: #f0f1f4;
+  border-color: #e4e6ea;
+}
+.liq-page--light .liq-upl-breakdown__row {
+  color: #555;
+}
+.liq-page--light .liq-upl-breakdown .liq-upl-total {
+  color: #1a1a1a;
+  border-top-color: #dcdde2;
+}
+.liq-formula-out {
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--liq-text);
+  font-weight: 600;
+}
+.liq-formula {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--liq-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 0;
+  word-break: break-word;
+}
+.liq-step-note {
+  font-size: 12px;
+  color: var(--liq-dim);
+  margin-top: 10px;
+}
+
+.liq-calc-conclusion {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+  background: rgba(99, 102, 241, 0.08);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--liq-text);
+}
+.liq-calc-conclusion strong {
+  font-weight: 400;
+}
+
+/* 表格 */
+.liq-table-wrap {
+  overflow-x: auto;
+  margin: 10px 0 6px;
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+}
+.liq-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+.liq-table th {
+  text-align: left;
+  padding: 11px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--liq-dim);
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--liq-border);
+}
+.liq-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--liq-border);
+  color: var(--liq-muted);
+}
+.liq-table tr:last-child td { border-bottom: 0; }
+.liq-table td.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+/* 仓位卡片（全仓） */
+.liq-pos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .liq-pos-grid { grid-template-columns: 1fr; }
+}
+.liq-pos {
+  border-radius: var(--liq-radius-sm);
+  padding: 16px 18px;
+  border: 1px solid var(--liq-border);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.liq-pos-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.liq-pos-name { font-size: 14px; font-weight: 800; }
+.liq-pos-meta { font-size: 12px; color: var(--liq-dim); margin-top: 4px; }
+.liq-status {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.liq-status--liq {
+  color: var(--liq-red);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: var(--liq-red-dim);
+}
+.liq-status--ok {
+  color: var(--liq-green);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.08);
+}
+.liq-pos-kv {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  gap: 12px;
+}
+.liq-pos-kv span:first-child { color: var(--liq-dim); }
+.liq-pos-kv b { font-variant-numeric: tabular-nums; color: var(--liq-text); }
+.liq-pos-kv b.neg { color: var(--liq-red); }
+.liq-pos-kv b.pos { color: var(--liq-green); }
+
+/* 建议网格 */
+.liq-advice-grid {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .liq-advice-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.liq-advice {
+  padding: 16px 18px;
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.2s, background 0.2s;
+}
+.liq-advice:hover {
+  border-color: rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.04);
+}
+.liq-advice h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--liq-text);
+}
+.liq-advice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--liq-muted);
+}
+.liq-advice .hl {
+  color: var(--liq-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 了解更多：普通文本 + 外链 */
+.liq-more-plain {
+  margin: 0;
+  padding: 0;
+}
+.liq-more-lead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--liq-text);
+}
+.liq-more-block {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.liq-more-item {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--liq-text);
+}
+.liq-more-url {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  word-break: break-all;
+  color: var(--liq-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.liq-more-url:hover {
+  opacity: 0.85;
+}
+.liq-page--light .liq-more-lead,
+.liq-page--light .liq-more-item {
+  color: #333;
+}
+.liq-page--light .liq-more-url {
+  color: #0369a1;
+}
+
+/* 链接列表 */
+.liq-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.liq-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+  color: var(--liq-text);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
+}
+.liq-link:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+.liq-link span.muted {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--liq-dim);
+}
+.liq-link .chev { color: var(--liq-dim); font-size: 18px; opacity: 0.6; }
+.liq-link--disabled {
+  pointer-events: none;
+  opacity: 0.72;
+  cursor: default;
+}
+
+/* 为您推荐模块：双引号包裹的关怀话术，无背景块 */
+.liq-voice {
+  margin: 0 0 16px;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.liq-voice__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--liq-muted);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+@media (max-width: 520px) {
+  .liq-voice__text {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+}
+
+/* 为您推荐：三列横排 */
+.liq-lowrisk-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 2px;
+}
+@media (max-width: 680px) {
+  .liq-lowrisk-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    margin-left: -2px;
+    margin-right: -2px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+  .liq-lowrisk-card {
+    flex: 0 0 min(42vw, 200px);
+    min-width: min(42vw, 200px);
+    max-width: 220px;
+    scroll-snap-align: start;
+  }
+}
+.liq-lowrisk-card {
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+  border-top-width: 3px;
+  border-top-style: solid;
+  background: var(--liq-panel2);
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.liq-lowrisk-card--spot {
+  border-top-color: #0ea5e9;
+}
+.liq-lowrisk-card--copy {
+  border-top-color: #8b5cf6;
+}
+.liq-lowrisk-card--act {
+  border-top-color: #f59e0b;
+}
+.liq-lowrisk-card:hover {
+  border-color: rgba(56, 189, 248, 0.22);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+}
+.liq-lowrisk-card__title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--liq-text);
+  letter-spacing: -0.02em;
+}
+.liq-lowrisk-card__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--liq-muted);
+  flex: 1;
+}
+.liq-lowrisk-card__cta {
+  margin-top: 12px;
+  align-self: stretch;
+  text-align: center;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  transition: filter 0.15s, transform 0.15s;
+}
+.liq-lowrisk-card__cta:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+.liq-lowrisk-card--spot .liq-lowrisk-card__cta {
+  background: #0284c7;
+}
+.liq-lowrisk-card--copy .liq-lowrisk-card__cta {
+  background: #7c3aed;
+}
+.liq-lowrisk-card--act .liq-lowrisk-card__cta {
+  background: #d97706;
+}
+.liq-page--light .liq-lowrisk-card {
+  background: #fff;
+  border-color: #ebebeb;
+}
+.liq-page--light .liq-lowrisk-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+.liq-page--light .liq-lowrisk-card__hint {
+  color: #666;
+}
+
+/* 全仓页等：三卡网格（旧结构兼容） */
+.liq-rec-grid {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .liq-rec-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.liq-rec {
+  padding: 20px 18px;
+  border-radius: var(--liq-radius-sm);
+  border: 1px solid var(--liq-border);
+  background: var(--liq-panel2);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.liq-rec:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  transform: translateY(-2px);
+}
+.liq-rec-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+.liq-rec--earn .liq-rec-icon {
+  background: rgba(52, 211, 153, 0.15);
+}
+.liq-rec--spot .liq-rec-icon {
+  background: rgba(56, 189, 248, 0.15);
+}
+.liq-rec--act .liq-rec-icon {
+  background: rgba(251, 191, 36, 0.15);
+}
+.liq-rec h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.liq-rec p {
+  margin: 0 0 14px;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--liq-muted);
+}
+.liq-rec a {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--liq-accent);
+  text-decoration: none;
+}
+.liq-rec a:hover {
+  text-decoration: underline;
+}
+
+/* —— 浅色主题（与入口页一致） —— */
+.liq-page--light {
+  background: #f7f8fa !important;
+  background-image: none !important;
+  color: #333;
+  --liq-text: #1a1a1a;
+  --liq-muted: #555;
+  --liq-dim: #999;
+  --liq-panel: #fff;
+  --liq-panel2: #fafafa;
+  --liq-border: #ebebeb;
+  --liq-border2: #e0e0e0;
+  --liq-red: #f6465d;
+  --liq-green: #0ecb81;
+  --liq-accent: #6d28d9;
+  --liq-amber: #d97706;
+  --liq-red-dim: rgba(246, 70, 93, 0.08);
+  --liq-bg0: #f7f8fa;
+  --liq-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.liq-page--light .liq-card {
+  backdrop-filter: none;
+  box-shadow: var(--liq-shadow);
+}
+.liq-page--light .liq-back {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  color: #666;
+}
+.liq-page--light .liq-back:hover {
+  background: #f5f5f5;
+  color: #333;
+  border-color: #ddd;
+}
+.liq-page--light .liq-chip {
+  background: #f5f5f5;
+  border-color: #e5e5e5;
+  color: #666;
+}
+.liq-page--light .liq-chip--iso {
+  color: #0369a1;
+  background: #e0f2fe;
+  border-color: #bae6fd;
+}
+.liq-page--light .liq-chip--cross {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.liq-page--light .liq-chip--dir.liq-chip--long {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.liq-page--light .liq-chip--dir.liq-chip--short {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.liq-page--light .liq-sec-num {
+  background: #f0f0f0;
+  color: #666;
+}
+.liq-page--light .liq-tl-card {
+  background: #fafafa;
+}
+.liq-page--light .liq-tl-item--warn .liq-tl-card {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.liq-page--light .liq-tl-item--liq .liq-tl-card {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.liq-page--light .liq-tl-dot {
+  border-color: #f7f8fa;
+}
+.liq-page--light .liq-calc-lead-line,
+.liq-page--light .liq-calc-lead-formula,
+.liq-page--light .liq-formula-out {
+  color: #333;
+  font-weight: 600;
+}
+.liq-page--light .liq-calc-lead-mark {
+  border-color: #94a3b8;
+  color: #64748b;
+  background: #f8fafc;
+  opacity: 1;
+}
+.liq-page--light .liq-calc-lead-note {
+  color: #64748b;
+}
+.liq-page--light .liq-calc-lead-note strong {
+  color: #334155;
+}
+.liq-page--light .liq-formula {
+  color: #333;
+  background: #f0f1f4;
+  border-color: #e4e6ea;
+}
+.liq-page--light .liq-calc-intro {
+  background: #f5f3ff;
+  border-left-color: var(--liq-accent);
+}
+.liq-page--light .liq-summary-table-wrap {
+  border-color: #e5e5e5;
+}
+.liq-page--light .liq-pos-summary-table th,
+.liq-page--light .liq-pos-summary-table td {
+  border-color: #e5e5e5;
+}
+.liq-page--light .liq-pos-summary-table thead th {
+  background: #f5f5f5;
+  color: #666;
+}
+.liq-page--light .liq-table th {
+  background: #f5f5f5;
+  color: #666;
+}
+.liq-page--light .liq-pos {
+  background: #fafafa;
+}
+.liq-page--light .liq-voice__text {
+  color: #666;
+}
+.liq-page--light .liq-step::before {
+  background: #f0f0f0;
+  border-color: #e5e5e5;
+  color: var(--liq-accent);
+}
+.liq-page--light .liq-calc-conclusion {
+  background: #f5f5f5;
+  border-color: #e5e5e5;
+  color: #1a1a1a;
+}
+.liq-page--light .liq-calc-conclusion strong {
+  color: #1a1a1a;
+  font-weight: 400;
+}
+
+/* 强制平仓区块：标记价 / 强平价 / 未实现盈亏 三列 */
+.liq-tl-metrics--wide {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* 合约操作建议：逐仓页纵向叠放 */
+.liq-advice-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.liq-advice-stack .liq-advice {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 全仓等：横向可滚动（与逐仓区分） */
+.liq-advice-row {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.liq-advice-row .liq-advice {
+  flex: 1;
+  min-width: min(280px, 85vw);
+  scroll-snap-align: start;
+}
+@media (min-width: 900px) {
+  .liq-advice-row .liq-advice {
+    min-width: 0;
+  }
+}
+.liq-page--light .liq-advice:hover {
+  border-color: #ddd;
+  background: #fafafa;
+}
