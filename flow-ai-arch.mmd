@@ -1,0 +1,24 @@
+flowchart TB
+  subgraph clients["跨平台客户端"]
+    Web[Web 浏览器]
+    App[APP WebView]
+  end
+  subgraph backend["业务后端"]
+    API[爆仓解读 API]
+    Cache[(缓存)]
+    Adpt[AI 适配层]
+  end
+  subgraph impl["实现方式二选一"]
+    Dify[Dify 工作流 API]
+    Direct[直连 OpenAI 兼容 API]
+  end
+  LLM[(大模型)]
+
+  Web --> API
+  App --> API
+  API --> Cache
+  Cache -->|未命中| Adpt
+  Adpt --> Dify
+  Adpt --> Direct
+  Dify --> LLM
+  Direct --> LLM

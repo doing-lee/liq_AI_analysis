@@ -592,6 +592,21 @@
   margin-top: 0;
   word-break: break-word;
 }
+/* 全仓计算验证：同一灰块内多行公式（与逐仓 liq-formula 视觉一致） */
+.liq-formula--stack .liq-formula-row {
+  margin: 0 0 10px;
+  padding: 0;
+}
+.liq-formula--stack .liq-formula-row:last-child {
+  margin-bottom: 0;
+}
+.liq-formula--stack .liq-formula-row--total {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--liq-border);
+  color: var(--liq-text);
+  font-weight: 500;
+}
 .liq-step-note {
   font-size: 12px;
   color: var(--liq-dim);
@@ -1107,6 +1122,10 @@
   color: #333;
   background: #f0f1f4;
   border-color: #e4e6ea;
+}
+.liq-page--light .liq-formula--stack .liq-formula-row--total {
+  border-top-color: #dcdde2;
+  color: #1a1a1a;
 }
 .liq-page--light .liq-calc-intro {
   background: #f5f3ff;

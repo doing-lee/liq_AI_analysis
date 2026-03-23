@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: Toobit 爆仓解读聚合 API（PRD 5.4.11 同步稿）
+  description: |
+    路径前缀以主站 API 网关为准。成功时若使用统一信封，业务体在 `data` 内。
+    详见仓库内 PRD：`PRD_爆仓原因AI解读.md` §5.4.11。
+  version: "1.0.0"
+
+servers:
+  - url: https://api.example.com
+    description: 替换为实际 API 网关或业务域名
+
+paths:
+  /api/v1/contract/liquidation-explain:
+    get:
+      summary: 查询单笔爆仓解读聚合数据
+      operationId: getLiquidationExplain
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: orderId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 爆仓/强平关联订单标识，与列表入参一致
+        - name: marginMode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [isolated, cross]
+        - name: symbol
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: side
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [long, short]
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            default: zh-CN
+      responses:
+        "200":
+          description: 成功（含统一信封时 `code=0` 且 `data` 为业务体）
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/EnvelopeSuccess"
+                  - $ref: "#/components/schemas/LiquidationExplainData"
+        "401":
+          description: 未登录
+        "403":
+          description: 非本人或无权限
+        "404":
+          description: 订单不存在或非爆仓单
+        "429":
+          description: 限频
+        "500":
+          description: 服务错误
+        "503":
+          description: AI 不可用（可选）
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    EnvelopeSuccess:
+      type: object
+      required: [code, data]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/LiquidationExplainData"
+
+    LiquidationExplainData:
+      type: object
+      required:
+        - orderId
+        - marginMode
+        - header
+        - timeline
+        - positionSummary
+        - calc
+        - moreLinks
+        - ai
+        - aiMeta
+        - recommendations
+      properties:
+        orderId:
+          type: string
+        marginMode:
+          type: string
+          enum: [isolated, cross]
+        header:
+          type: object
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineItem"
+        positionSummary:
+          type: object
+        calc:
+          type: object
+          description: 计算验证三节；全仓可有 crossExtras
+          properties:
+            marginMode:
+              type: string
+            steps:
+              type: array
+            conclusion:
+              type: string
+            crossExtras:
+              type: object
+              description: 仅 cross；如 positions 展示列表
+        moreLinks:
+          type: array
+          items:
+            type: object
+            required: [title, url]
+            properties:
+              title:
+                type: string
+              url:
+                type: string
+                format: uri
+        ai:
+          $ref: "#/components/schemas/AiAdviceBlock"
+        aiMeta:
+          type: object
+          properties:
+            fromCache:
+              type: boolean
+            templateFallback:
+              type: boolean
+            provider:
+              type: string
+            contentVersion:
+              type: string
+        recommendations:
+          type: array
+          minItems: 2
+          maxItems: 4
+          items:
+            type: object
+            required: [kind, title, hint, ctaText, ctaUrl]
+            properties:
+              kind:
+                type: string
+              title:
+                type: string
+              hint:
+                type: string
+              ctaText:
+                type: string
+              ctaUrl:
+                type: string
+                format: uri
+
+    TimelineItem:
+      type: object
+      required: [kind, occurredAt, tag, description]
+      properties:
+        kind:
+          type: string
+          enum: [risk_warn, liquidation]
+        occurredAt:
+          type: string
+        tag:
+          type: string
+        description:
+          type: string
+
+    AiAdviceBlock:
+      type: object
+      required:
+        - advice_leverage
+        - advice_stoploss
+        - advice_warn
+        - voice_quote
+      properties:
+        advice_leverage:
+          type: string
+        advice_stoploss:
+          type: string
+        advice_warn:
+          type: string
+        voice_quote:
+          type: string

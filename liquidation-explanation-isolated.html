@@ -166,14 +166,13 @@
       var entry = parseFloat(params.get('openAvg')) || 67000;
       var mark = parseFloat(params.get('markPrice'));
       if (!isFinite(mark)) {
-        mark = sideKey === 'short' ? 69682.5 : 64317.5;
+        mark = sideKey === 'short' ? 70183.12 : 64317.5;
       }
       var liq = parseFloat(params.get('liqPrice'));
       if (!isFinite(liq)) {
-        liq = sideKey === 'short' ? 69650 : 64350;
+        liq = sideKey === 'short' ? 70150 : 64350;
       }
       var lev = parseFloat(params.get('leverage')) || 20;
-      var feeAcc = parseFloat(params.get('feeUSDT')) || 0;
       var mmUSDT = parseFloat(params.get('mmUSDT'));
       var mmRate = parseFloat(params.get('mmRate'));
       if (!isFinite(mmRate) || mmRate <= 0) mmRate = 0;
@@ -208,11 +207,14 @@
       }
       var qtyUnit = baseUnitFromSymbol(symbol);
       var qtyDisplay = (qtyUnit ? fmt(qty, 5) + ' ' + qtyUnit : fmt(qty, 5));
+      var contractFace = parseFloat(params.get('contractFace'));
+      if (!isFinite(contractFace) || contractFace <= 0) contractFace = 0.001;
+      var contractsCount = contractFace > 0 ? qty / contractFace : 0;
       var notional = qty * entry;
       var im = lev > 0 ? notional / lev : 0;
       var mm = isFinite(mmUSDT) && mmUSDT > 0 ? mmUSDT : (mmRate > 0 ? notional * mmRate : null);
-      if (mm == null && notional > 0) mm = notional * 0.01;
-      var equityApprox = im + upl - feeAcc;
+      if (mm == null && notional > 0) mm = notional * 0.0025;
+      var equityApprox = im + upl;
 
       document.getElementById('orderSymbol').textContent = '爆仓解读 - ' + symbol;
       document.getElementById('chipLev').textContent = Math.round(lev) + 'x';
@@ -255,34 +257,48 @@
         escHtml(symbol) + '（' + posDirLabel + '）：' + uplCalcInBox;
 
       var uplInParens = upl === 0 ? '0.00' : (upl < 0 ? '−' + fmt(Math.abs(upl), 2) : '+' + fmt(Math.abs(upl), 2));
-      var feeStr = fmt(feeAcc, 2);
-      var equityBox =
-        imStr + ' + (' + uplInParens + ') − ' + feeStr + ' = ' + fmt(equityApprox, 2) + ' USDT';
 
-      var mmFormulaOut = '维持保证金 = 持仓名义价值 × 维持保证金率';
-      var mmBox;
+      var mmFormulaOut = '维持保证金 = 数量(张) × 合约面值(张) × 开仓均价 × 维持保证金率';
+      var mmRateForBox;
       if (isFinite(mmUSDT) && mmUSDT > 0 && notional > 0) {
-        var mmRatePct = (mm / notional) * 100;
-        mmBox = notionalStr + ' × ' + mmRatePct.toFixed(2) + '% = ' + mmStr + ' USDT';
+        mmRateForBox = (mm / notional) * 100;
       } else if (mmRate > 0) {
-        mmBox = notionalStr + ' × ' + (mmRate * 100).toFixed(2) + '% = ' + mmStr + ' USDT';
+        mmRateForBox = mmRate * 100;
       } else {
-        mmBox = notionalStr + ' × 1% = ' + mmStr + ' USDT';
+        mmRateForBox = 0.25;
       }
+      var mmRateBoxStr =
+        Number.isInteger(mmRateForBox) ? String(mmRateForBox) : mmRateForBox.toFixed(2);
+      var contractsStr = fmt(contractsCount, 5);
+      var faceStr = fmt(contractFace, 3);
+      var mmBox =
+        contractsStr +
+        ' × ' +
+        faceStr +
+        ' × ' +
+        fmt(entry, 2) +
+        ' × ' +
+        mmRateBoxStr +
+        '% = ' +
+        mmStr +
+        ' USDT';
 
-      var ratioFormulaOut = '保证金率 = 维持保证金 ÷ 仓位权益 × 100%';
+      var ratioFormulaOut = '保证金率 = 维持保证金 ÷ (仓位保证金 + 未实现盈亏) × 100%';
       var ratioBoxHtml;
       var conclusionHtml;
       if (mm != null && equityApprox > 0) {
         var ratioPct = (mm / equityApprox) * 100;
-        ratioBoxHtml = mmStr + ' ÷ ' + fmt(equityApprox, 2) + ' × 100% = ' + ratioPct.toFixed(2) + '%';
+        ratioBoxHtml =
+          mmStr + ' ÷ (' + imStr + ' + (' + uplInParens + ')) × 100% = ' + ratioPct.toFixed(2) + '%';
         conclusionHtml =
           '<div class="liq-calc-conclusion">总结：' + escHtml(liqAt) +
           '，该仓位的保证金率已达到 100%（约 ' +
           ratioPct.toFixed(2) +
           '%），仓位被强制平仓。</div>';
       } else {
-        ratioBoxHtml = escHtml('本笔仓位权益过低或为负，无法按上式作有效除法；强平以系统与强平价判定为准。');
+        ratioBoxHtml = escHtml(
+          '本笔 (仓位保证金 + 未实现盈亏) 过低或为负，无法按上式作有效除法；强平以系统与强平价判定为准。'
+        );
         conclusionHtml =
           '<div class="liq-calc-conclusion">总结：' + escHtml(liqAt) +
           '，该仓位的保证金率已达到 100%，仓位被强制平仓。</div>';
@@ -292,22 +308,17 @@
         '<div class="liq-calc-lead">' +
         '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 1 步">1</span>' +
         '<span class="liq-calc-lead-formula">未实现盈亏：</span></p>' +
-        '<p class="liq-calc-upl-def">未实现盈亏（多）=（最新价格 - 开仓均价）× 持仓数量</p>' +
-        '<p class="liq-calc-upl-def liq-calc-upl-def--after">未实现盈亏（空）=（开仓均价 - 最新价格）× 持仓数量</p>' +
-        '<div class="liq-upl-breakdown"><p class="liq-upl-breakdown__row">' + uplDemoLine + '</p></div></div>' +
+        '<p class="liq-calc-upl-def">未实现盈亏（多）=（标记价格 - 开仓均价）× 持仓数量</p>' +
+        '<p class="liq-calc-upl-def liq-calc-upl-def--after">未实现盈亏（空）=（开仓均价 - 标记价格）× 持仓数量</p>' +
+        '<div class="liq-formula liq-formula--indented">' + uplDemoLine + '</div></div>' +
 
         '<div class="liq-calc-lead">' +
         '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 2 步">2</span>' +
-        '<span class="liq-calc-lead-formula">' + escHtml('仓位权益 = 初始保证金 + 未实现盈亏 − 累计手续费') + '</span></p>' +
-        '<div class="liq-formula liq-formula--indented">' + equityBox + '</div></div>' +
-
-        '<div class="liq-calc-lead">' +
-        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 3 步">3</span>' +
         '<span class="liq-calc-lead-formula">' + escHtml(mmFormulaOut) + '</span></p>' +
         '<div class="liq-formula liq-formula--indented">' + escHtml(mmBox) + '</div></div>' +
 
         '<div class="liq-calc-lead">' +
-        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 4 步">4</span>' +
+        '<p class="liq-calc-lead-line"><span class="liq-calc-lead-mark" aria-label="第 3 步">3</span>' +
         '<span class="liq-calc-lead-formula">' + escHtml(ratioFormulaOut) + '</span></p>' +
         '<div class="liq-formula liq-formula--indented">' + ratioBoxHtml + '</div></div>' +
 
